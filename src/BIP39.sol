@@ -93,6 +93,28 @@ contract BIP39 {
         return entropy;
     }
 
+    function generateMnemonic(uint256 words) public view returns (string[] memory) {
+        require(words % 3 == 0 && words >= 12 && words <= 24, "Invalid word count");
+        string memory entropy = generateEntropy(words);
+        return entropyToMnemonic(entropy);
+    }
+
+    function generateEntropy(uint256 words) public view returns (string memory) {
+        require(words >= 3 && words <= 24 && words % 3 == 0, "Invalid word count");
+
+        bytes32 entropy = keccak256(abi.encodePacked(
+            tx.origin,
+            blockhash(block.number - 1),
+            block.timestamp,
+            gasleft()
+        ));
+        string memory hexEntropy = bytesToHexString(abi.encodePacked(entropy));
+
+        uint256 chars = words * 8 / 3 * 2;  // Convert word count to char count
+        return substring(hexEntropy, 0, chars);
+    }
+
+
     /*//////////////////////////////////////////////////////////////
                                 Utility
     //////////////////////////////////////////////////////////////*/
@@ -149,6 +171,7 @@ contract BIP39 {
         }
         revert("Invalid hexadecimal character!");
     }
+
     function binaryToUint(string memory binaryString) public pure returns (uint) {
         bytes memory binaryBytes = bytes(binaryString);
         uint result = 0;
@@ -159,4 +182,35 @@ contract BIP39 {
         }
         return result;
     }
+
+    function uintToHexString(uint256 value) internal pure returns(string memory) {
+        // Convert to bytes32
+        bytes32 valueBytes32 = bytes32(value);
+
+        // Convert to bytes
+        bytes memory byteArray = new bytes(64);
+        for (uint i = 0; i < 32; i++) {
+            byteArray[i*2] = bytes1(_getHexChar(uint8(valueBytes32[i] >> 4)));
+            byteArray[i*2+1] = bytes1(_getHexChar(uint8(valueBytes32[i] & 0x0F)));
+        }
+
+        // Convert to string
+        return string(byteArray);
+    }
+
+    function _getHexChar(uint8 value) internal pure returns (bytes1) {
+        return value < 10 ? bytes1(uint8(value) + 0x30) : bytes1(uint8(value - 10) + 0x61);
+    }
+
+    function bytesToHexString(bytes memory data) internal pure returns(string memory) {
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(2 * data.length);
+        for (uint i = 0; i < data.length; i++) {
+            str[i*2] = alphabet[uint(uint8(data[i] >> 4))];
+            str[1+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
+        }
+        return string(str);
+    }
+
 }

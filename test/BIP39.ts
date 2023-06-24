@@ -41,6 +41,10 @@ describe("BIP39", function () {
       expect(await bip39.wordlist(1046)).to.equal("lizard");
     });
 
+    it("Should generate mnemonics", async function () {
+      console.log(await bip39.generateMnemonic(12));
+    });
+
     // it("Should check words", async function () {
     //   expect(await bip39.isValidWord("rug")).to.equal(true);
     //   expect(await bip39.isValidWord("rugger")).to.equal(false);
