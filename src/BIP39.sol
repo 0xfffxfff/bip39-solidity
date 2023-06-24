@@ -27,7 +27,7 @@ contract BIP39 {
         }
     }
 
-    function finalize() external {
+    function finalizeWords() external {
         require(msg.sender == deployer, "only deployer");
         finalized = true;
     }
@@ -40,22 +40,27 @@ contract BIP39 {
                                 BIP39
     //////////////////////////////////////////////////////////////*/
 
-    function entropyToMnemonic(string memory hex_entropy) public pure returns (uint[] memory) {
-        bytes memory entropy = hexStrToBytes(hex_entropy);
-        bytes32 hashed = sha256(entropy);
-        string memory binary_entropy = toBinaryString(uint256(bytesToBytes32(entropy)));
-        string memory binary_checksum = substring(toBinaryString(uint256(hashed)), 0, entropy.length * 8 / 32);
-        string memory binary_string = string(abi.encodePacked(binary_entropy, binary_checksum));
-        uint mnemonicLength = (entropy.length * 8 + entropy.length * 8 / 32) / 11; // Each word in mnemonic is represented by 11 bits.
+    function entropyToMnemonic(string memory hexEntropy) public pure returns (uint[] memory) {
+        bytes memory entropy = hexStrToBytes(hexEntropy);
+        bytes32 hashedEntropy = sha256(entropy);
+
+        string memory binaryEntropy = toBinaryString(uint256(bytesToBytes32(entropy)));
+        string memory binaryChecksum = substring(toBinaryString(uint256(hashedEntropy)), 0, entropy.length * 8 / 32);
+        string memory binaryString = string(abi.encodePacked(binaryEntropy, binaryChecksum));
+
+        // Each word in mnemonic is represented by 11 bits.
+        uint mnemonicLength = (entropy.length * 8 + entropy.length * 8 / 32) / 11;
+
         uint[] memory mnemonicIndices = new uint[](mnemonicLength);
         for (uint i = 0; i < mnemonicLength; i++) {
-            uint index = binaryToUint(substring(binary_string, i * 11, (i+1) * 11));
+            uint index = binaryToUint(substring(binaryString, i * 11, (i+1) * 11));
             mnemonicIndices[i] = index;
         }
+
         return mnemonicIndices;
     }
-    function entropyToMnemonicString(string memory hex_entropy) public view returns (string[] memory) {
-        return indicesToWords(entropyToMnemonic(hex_entropy));
+    function entropyToMnemonicString(string memory hexEntropy) public view returns (string[] memory) {
+        return indicesToWords(entropyToMnemonic(hexEntropy));
     }
 
     function mnemonicToEntropy(uint[] memory wordIndices) public pure returns (bytes memory) {
@@ -93,6 +98,7 @@ contract BIP39 {
                 "Failed checksum"
             );
         }
+    
         return entropy;
     }
 
@@ -155,7 +161,6 @@ contract BIP39 {
         if (source.length == 0) {
             return 0x0;
         }
-
         assembly {
             result := mload(add(source, 32))
         }
@@ -196,17 +201,12 @@ contract BIP39 {
     }
 
     function uintToHexString(uint256 value) internal pure returns(string memory) {
-        // Convert to bytes32
         bytes32 valueBytes32 = bytes32(value);
-
-        // Convert to bytes
         bytes memory byteArray = new bytes(64);
         for (uint i = 0; i < 32; i++) {
             byteArray[i*2] = bytes1(_getHexChar(uint8(valueBytes32[i] >> 4)));
             byteArray[i*2+1] = bytes1(_getHexChar(uint8(valueBytes32[i] & 0x0F)));
         }
-
-        // Convert to string
         return string(byteArray);
     }
 
@@ -216,7 +216,6 @@ contract BIP39 {
 
     function bytesToHexString(bytes memory data) internal pure returns(string memory) {
         bytes memory alphabet = "0123456789abcdef";
-
         bytes memory str = new bytes(2 * data.length);
         for (uint i = 0; i < data.length; i++) {
             str[i*2] = alphabet[uint(uint8(data[i] >> 4))];

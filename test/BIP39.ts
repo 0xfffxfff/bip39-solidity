@@ -24,7 +24,7 @@ describe("BIP39", function () {
       let chunk = wordlists.english.slice(offset, offset + count);
       await bip39.commitWords(chunk, offset);
     }
-    await bip39.finalize();
+    await bip39.finalizeWords();
   });
 
   describe("Deployment", function () {
@@ -46,14 +46,6 @@ describe("BIP39", function () {
       console.log(await bip39.generateMnemonic(24));
       console.log(await bip39.generateMnemonic(3));
     });
-
-    // it("Should check words", async function () {
-    //   expect(await bip39.isValidWord("rug")).to.equal(true);
-    //   expect(await bip39.isValidWord("rugger")).to.equal(false);
-    //   expect(await bip39.isValidWord("abandon")).to.equal(true);
-    //   expect(await bip39.isValidWord("zone")).to.equal(true);
-    //   expect(await bip39.isValidWord("zoo")).to.equal(true);
-    // });
 
     it("Should generate a mnemonic from entropy", async function () {
       expect(
