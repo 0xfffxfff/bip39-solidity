@@ -94,7 +94,7 @@ contract BIP39 {
     }
 
     function generateMnemonic(uint256 words) public view returns (string[] memory) {
-        require(words % 3 == 0 && words >= 12 && words <= 24, "Invalid word count");
+        require(words >= 3 && words <= 24 && words % 3 == 0, "Invalid word count");
         string memory entropy = generateEntropy(words);
         return entropyToMnemonic(entropy);
     }
@@ -110,7 +110,7 @@ contract BIP39 {
         ));
         string memory hexEntropy = bytesToHexString(abi.encodePacked(entropy));
 
-        uint256 chars = words * 8 / 3 * 2;  // Convert word count to char count
+        uint256 chars = words * 8 / 3;
         return substring(hexEntropy, 0, chars);
     }
 

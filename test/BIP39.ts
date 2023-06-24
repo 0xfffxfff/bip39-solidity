@@ -43,6 +43,8 @@ describe("BIP39", function () {
 
     it("Should generate mnemonics", async function () {
       console.log(await bip39.generateMnemonic(12));
+      console.log(await bip39.generateMnemonic(24));
+      console.log(await bip39.generateMnemonic(3));
     });
 
     // it("Should check words", async function () {
