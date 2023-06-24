@@ -12,10 +12,14 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
         bool bound;
     }
     mapping(uint256 => Mnemonic) public mnemonics;
-    mapping(uint256 => bool) public mintedIndices;
-    uint256 public wordPrice = 0.01 ether;
+
     uint256 public totalSupply;
-    bool public locked = true;
+    uint256 public wordPrice = 0.01 ether;
+
+    bool public locked = true; // prevent minting
+
+    mapping(uint256 => bool) public isIndexMinted;
+    uint256 totalWords = 0; // total minted words
 
     constructor() ERC721("Mnemonic Poem", "MNEMO") Owned(msg.sender) {}
 
@@ -28,8 +32,8 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
     }
 
     function mint(uint256[] memory mnemonicIndices) external payable {
-        require(!locked, "LOCKED");
         uint mnemonicPrice = wordPrice * mnemonicIndices.length;
+        require(!locked, "LOCKED");
         require(msg.value == mnemonicPrice, "PRICE");
         uint id = ++totalSupply;
 
@@ -37,17 +41,34 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
         // and serves us to validate the mnemonic.
         mnemonicToEntropy(mnemonicIndices);
 
-        // Words can only be minted once.
+        // Words can only be minted once
         for (uint i = 0; i < mnemonicIndices.length; i++) {
-            require(!mintedIndices[mnemonicIndices[i]], "WORD_ALREADY_MINTED");
-            mintedIndices[mnemonicIndices[i]] = true;
+            require(!isIndexMinted[mnemonicIndices[i]], "WORD_ALREADY_MINTED");
+            isIndexMinted[mnemonicIndices[i]] = true;
         }
+
+        // Keep track of words minted
+        totalWords += mnemonicIndices.length;
 
         // Store the mnemonic
         mnemonics[id].indices = mnemonicIndices;
 
         // Mint the token
         _mint(msg.sender, id);
+    }
+
+    /**
+     * Intended to be used offchain
+     */
+    function getMintedIndices() external view returns (uint256[] memory) {
+        uint256[] memory mintedIndicesArray = new uint256[](totalWords);
+        uint words = 0;
+        for (uint i = 0; i < totalSupply; i++) {
+            for (uint j = 0; j < mnemonics[i].indices.length; j++) {
+                mintedIndicesArray[words++] = mnemonics[i].indices[j];
+            }
+        }
+        return mintedIndicesArray;
     }
 
     /*//////////////////////////////////////////////////////////////
