@@ -36,6 +36,10 @@ contract BIP39 {
         return wordlist;
     }
 
+    /*//////////////////////////////////////////////////////////////
+                                BIP 39
+    //////////////////////////////////////////////////////////////*/
+
     function entropyToMnemonic(string memory hex_entropy) public view returns (string[] memory) {
         bytes memory entropy = hexStrToBytes(hex_entropy);
         bytes32 hashed = sha256(entropy);
@@ -49,6 +53,57 @@ contract BIP39 {
             mnemonic[i] = wordlist[index];
         }
         return mnemonic;
+    }
+
+    function mnemonicToEntropy(uint[] memory wordIndices) public pure returns (bytes memory) {
+        require(wordIndices.length >= 3 && wordIndices.length <= 24 && wordIndices.length % 3 == 0, "Invalid word count");
+
+        uint concatLenBits = wordIndices.length * 11;
+        bytes memory concatBits = new bytes(concatLenBits);
+
+        for (uint wordIndex = 0; wordIndex < wordIndices.length; wordIndex++) {
+            uint ndx = wordIndices[wordIndex];
+
+            for (uint i = 0; i < 11; i++) {
+                bool isOne = (ndx & (1 << (10 - i))) != 0;
+                concatBits[(wordIndex * 11) + i] = isOne ? bytes1(uint8(1)) : bytes1(uint8(0));
+            }
+        }
+
+        uint checksumLengthBits = concatLenBits / 33;
+        uint entropyLengthBits = concatLenBits - checksumLengthBits;
+
+        bytes memory entropy = new bytes(entropyLengthBits / 8);
+        for (uint i = 0; i < entropy.length; i++) {
+            for (uint j = 0; j < 8; j++) {
+                if (uint8(concatBits[(i * 8) + j]) == 1) {
+                    entropy[i] = bytes1(uint8(entropy[i]) | uint8(1 << (7 - j)));
+                }
+            }
+        }
+
+        bytes32 hashBytes = sha256(entropy);
+
+        for (uint i = 0; i < checksumLengthBits; i++) {
+            require(
+                uint8(concatBits[entropyLengthBits + i]) == uint8(uint8(hashBytes[i / 8]) >> (7 - i % 8) & 1),
+                "Failed checksum"
+            );
+        }
+        return entropy;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                Utility
+    //////////////////////////////////////////////////////////////*/
+
+    function substring(string memory str, uint startIndex, uint endIndex) public pure returns (string memory) {
+        bytes memory strBytes = bytes(str);
+        bytes memory result = new bytes(endIndex - startIndex);
+        for (uint i = startIndex; i < endIndex; i++) {
+            result[i - startIndex] = strBytes[i];
+        }
+        return string(result);
     }
 
     function toBinaryString(uint256 x) public pure returns (string memory) {
@@ -94,54 +149,6 @@ contract BIP39 {
         }
         revert("Invalid hexadecimal character!");
     }
-
-    function mnemonicToEntropy(uint[] memory wordIndices) public pure returns (bytes memory) {
-        require(wordIndices.length >= 3 && wordIndices.length <= 24 && wordIndices.length % 3 == 0, "Invalid word count");
-
-        uint concatLenBits = wordIndices.length * 11;
-        bytes memory concatBits = new bytes(concatLenBits);
-
-        for (uint wordIndex = 0; wordIndex < wordIndices.length; wordIndex++) {
-            uint ndx = wordIndices[wordIndex];
-
-            for (uint i = 0; i < 11; i++) {
-                bool isOne = (ndx & (1 << (10 - i))) != 0;
-                concatBits[(wordIndex * 11) + i] = isOne ? bytes1(uint8(1)) : bytes1(uint8(0));
-            }
-        }
-
-        uint checksumLengthBits = concatLenBits / 33;
-        uint entropyLengthBits = concatLenBits - checksumLengthBits;
-
-        bytes memory entropy = new bytes(entropyLengthBits / 8);
-        for (uint i = 0; i < entropy.length; i++) {
-            for (uint j = 0; j < 8; j++) {
-                if (uint8(concatBits[(i * 8) + j]) == 1) {
-                    entropy[i] = bytes1(uint8(entropy[i]) | uint8(1 << (7 - j)));
-                }
-            }
-        }
-
-        bytes32 hashBytes = sha256(entropy);
-
-        for (uint i = 0; i < checksumLengthBits; i++) {
-            require(
-                uint8(concatBits[entropyLengthBits + i]) == uint8(uint8(hashBytes[i / 8]) >> (7 - i % 8) & 1),
-                "Failed checksum"
-            );
-        }
-        return entropy;
-    }
-
-    function substring(string memory str, uint startIndex, uint endIndex) public pure returns (string memory) {
-        bytes memory strBytes = bytes(str);
-        bytes memory result = new bytes(endIndex - startIndex);
-        for (uint i = startIndex; i < endIndex; i++) {
-            result[i - startIndex] = strBytes[i];
-        }
-        return string(result);
-    }
-
     function binaryToUint(string memory binaryString) public pure returns (uint) {
         bytes memory binaryBytes = bytes(binaryString);
         uint result = 0;
