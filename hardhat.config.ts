@@ -10,7 +10,15 @@ import "hardhat-gas-reporter"
 import fs from 'fs';
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.17",
+  solidity: {
+    version: "0.8.17",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 2000000
+      }
+    }
+  },
   preprocess: {
     eachLine: (hre) => ({
       transform: (line: string) => {
