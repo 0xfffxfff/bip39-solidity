@@ -37,7 +37,7 @@ contract BIP39 {
     }
 
     /*//////////////////////////////////////////////////////////////
-                                BIP 39
+                                BIP39
     //////////////////////////////////////////////////////////////*/
 
     function entropyToMnemonic(string memory hex_entropy) public view returns (string[] memory) {
