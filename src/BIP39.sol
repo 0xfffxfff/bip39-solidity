@@ -4,10 +4,9 @@ pragma solidity ^0.8.17;
 contract BIP39 {
 
     string[2048] public wordlist;
-    address private deployer;
-    bool public finalized;
-
     string public language = "english";
+    bool public finalized;
+    address private deployer;
 
     constructor() {
         deployer = msg.sender;
@@ -96,7 +95,7 @@ contract BIP39 {
                 "Failed checksum"
             );
         }
-    
+
         return entropy;
     }
 
