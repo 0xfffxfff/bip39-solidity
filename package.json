@@ -22,5 +22,8 @@
     "hardhat-gas-reporter": "^1.0.9",
     "hardhat-preprocessor": "^0.1.5",
     "typechain": "^8.1.0"
+  },
+  "dependencies": {
+    "solmate": "^6.1.0"
   }
 }
