@@ -40,19 +40,22 @@ contract BIP39 {
                                 BIP39
     //////////////////////////////////////////////////////////////*/
 
-    function entropyToMnemonic(string memory hex_entropy) public view returns (string[] memory) {
+    function entropyToMnemonic(string memory hex_entropy) public pure returns (uint[] memory) {
         bytes memory entropy = hexStrToBytes(hex_entropy);
         bytes32 hashed = sha256(entropy);
         string memory binary_entropy = toBinaryString(uint256(bytesToBytes32(entropy)));
         string memory binary_checksum = substring(toBinaryString(uint256(hashed)), 0, entropy.length * 8 / 32);
         string memory binary_string = string(abi.encodePacked(binary_entropy, binary_checksum));
         uint mnemonicLength = (entropy.length * 8 + entropy.length * 8 / 32) / 11; // Each word in mnemonic is represented by 11 bits.
-        string[] memory mnemonic = new string[](mnemonicLength);
+        uint[] memory mnemonicIndices = new uint[](mnemonicLength);
         for (uint i = 0; i < mnemonicLength; i++) {
             uint index = binaryToUint(substring(binary_string, i * 11, (i+1) * 11));
-            mnemonic[i] = wordlist[index];
+            mnemonicIndices[i] = index;
         }
-        return mnemonic;
+        return mnemonicIndices;
+    }
+    function entropyToMnemonicString(string memory hex_entropy) public view returns (string[] memory) {
+        return indicesToWords(entropyToMnemonic(hex_entropy));
     }
 
     function mnemonicToEntropy(uint[] memory wordIndices) public pure returns (bytes memory) {
@@ -96,7 +99,16 @@ contract BIP39 {
     function generateMnemonic(uint256 words) public view returns (string[] memory) {
         require(words >= 3 && words <= 24 && words % 3 == 0, "Invalid word count");
         string memory entropy = generateEntropy(words);
-        return entropyToMnemonic(entropy);
+        uint[] memory mnemonicIndices = entropyToMnemonic(entropy);
+        return indicesToWords(mnemonicIndices);
+    }
+
+    function indicesToWords(uint256[] memory indices) public view returns (string[] memory) {
+        string[] memory words = new string[](indices.length);
+        for (uint index; index < indices.length; index++) {
+            words[index] = wordlist[indices[index]];
+        }
+        return words;
     }
 
     function generateEntropy(uint256 words) public view returns (string memory) {
