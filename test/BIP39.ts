@@ -57,7 +57,7 @@ describe("BIP39", function () {
 
     it("Should generate a mnemonic from entropy", async function () {
       expect(
-        await bip39.entropyToMnemonic(
+        await bip39.entropyToMnemonicString(
           "ff29322f8356e3c31759e5b508c65522f50efb7f5d5be050429585c81c7df26b"
         )
       ).to.have.ordered.members([
@@ -87,7 +87,7 @@ describe("BIP39", function () {
         "initial",
       ]);
       expect(
-        await bip39.entropyToMnemonic("05c7f9282242fffb")
+        await bip39.entropyToMnemonicString("05c7f9282242fffb")
       ).to.have.ordered.members([
         "alarm",
         "divert",
