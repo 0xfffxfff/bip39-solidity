@@ -24,6 +24,8 @@
     "typechain": "^8.1.0"
   },
   "dependencies": {
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-deploy": "^0.11.34",
     "solmate": "^6.1.0"
   }
 }
