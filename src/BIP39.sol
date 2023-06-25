@@ -2,30 +2,29 @@
 pragma solidity ^0.8.17;
 
 contract BIP39 {
-
+    string constant public language = "english";
     string[2048] public wordlist;
-    string public language = "english";
     bool public finalized;
     address private deployer;
 
     constructor() {
         deployer = msg.sender;
-        wordlist;
     }
 
-    function commitWords(string[] memory _wordsChunk, uint256 _offset) external {
+    modifier onlyDeployer {
         require(msg.sender == deployer, "only deployer");
+        _;
+    }
+
+    function commitWords(string[] memory _wordsChunk, uint256 _offset) external onlyDeployer {
         require(!finalized, "finalized");
         require(_offset + _wordsChunk.length - 1 < 2048, "index too high");
-
-        require(msg.sender == deployer);
         for (uint256 i = 0; i < _wordsChunk.length; i++) {
             wordlist[_offset + i] = _wordsChunk[i];
         }
     }
 
-    function finalizeWords() external {
-        require(msg.sender == deployer, "only deployer");
+    function finalizeWords() external onlyDeployer {
         finalized = true;
     }
 
@@ -37,27 +36,28 @@ contract BIP39 {
                                 BIP39
     //////////////////////////////////////////////////////////////*/
 
-    function entropyToMnemonic(string memory hexEntropy) public pure returns (uint[] memory) {
-        bytes memory entropy = hexStrToBytes(hexEntropy);
+    function entropyToMnemonic(bytes memory entropy) public view returns (uint[] memory) {
         bytes32 hashedEntropy = sha256(entropy);
-
-        string memory binaryEntropy = toBinaryString(uint256(bytesToBytes32(entropy)));
-        string memory binaryChecksum = substring(toBinaryString(uint256(hashedEntropy)), 0, entropy.length * 8 / 32);
+        string memory binaryEntropy = "";
+        for (uint i = 0; i < entropy.length; i++) {
+            binaryEntropy = string(abi.encodePacked(binaryEntropy, uintToBinaryString(uint8(entropy[i]), 8)));
+        }
+        string memory binaryChecksum = substring(uintToBinaryString(uint256(hashedEntropy), 256), 0, entropy.length * 8 / 4);
         string memory binaryString = string(abi.encodePacked(binaryEntropy, binaryChecksum));
 
-        // Each word in mnemonic is represented by 11 bits.
-        uint mnemonicLength = (entropy.length * 8 + entropy.length * 8 / 32) / 11;
+        uint mnemonicLength = (entropy.length * 8 + entropy.length / 4 + 7) / 11;
 
         uint[] memory mnemonicIndices = new uint[](mnemonicLength);
         for (uint i = 0; i < mnemonicLength; i++) {
-            uint index = binaryToUint(substring(binaryString, i * 11, (i+1) * 11));
+            uint index = binaryToUint(substring(binaryString, i * 11, min((i+1) * 11, bytes(binaryString).length)));
             mnemonicIndices[i] = index;
         }
-
         return mnemonicIndices;
     }
-    function entropyToMnemonicString(string memory hexEntropy) public view returns (string[] memory) {
-        return indicesToWords(entropyToMnemonic(hexEntropy));
+
+
+    function entropyToMnemonicString(bytes memory entropy) public view returns (string[] memory) {
+        return indicesToWords(entropyToMnemonic(entropy));
     }
 
     function mnemonicToEntropy(uint[] memory wordIndices) public pure returns (bytes memory) {
@@ -99,11 +99,15 @@ contract BIP39 {
         return entropy;
     }
 
-    function generateMnemonic(uint256 words) public view returns (string[] memory) {
+    function generateMnemonic(uint256 words) public view returns (uint[] memory) {
         require(words >= 3 && words <= 24 && words % 3 == 0, "Invalid word count");
-        string memory entropy = generateEntropy(words);
+        bytes memory entropy = generateEntropy(words);
         uint[] memory mnemonicIndices = entropyToMnemonic(entropy);
-        return indicesToWords(mnemonicIndices);
+        return mnemonicIndices;
+    }
+
+    function generateMnemonicString(uint256 words) public view returns (string[] memory) {
+        return indicesToWords(generateMnemonic(words));
     }
 
     function indicesToWords(uint256[] memory indices) public view returns (string[] memory) {
@@ -114,19 +118,24 @@ contract BIP39 {
         return words;
     }
 
-    function generateEntropy(uint256 words) public view returns (string memory) {
+    function generateEntropy(uint256 words) public view returns (bytes memory) {
         require(words >= 3 && words <= 24 && words % 3 == 0, "Invalid word count");
 
-        bytes32 entropy = keccak256(abi.encodePacked(
+        bytes32 totalEntropy = keccak256(abi.encodePacked(
             tx.origin,
             blockhash(block.number - 1),
             block.timestamp,
             gasleft()
         ));
-        string memory hexEntropy = bytesToHexString(abi.encodePacked(entropy));
 
-        uint256 chars = words * 8 / 3;
-        return substring(hexEntropy, 0, chars);
+        uint256 bits = words / 3 * 32;
+        uint256 bytesLength = bits / 8;
+
+        bytes memory entropy = new bytes(bytesLength);
+        for (uint i = 0; i < bytesLength; i++) {
+            entropy[i] = totalEntropy[i];
+        }
+        return entropy;
     }
 
 
@@ -134,7 +143,7 @@ contract BIP39 {
                                 Utility
     //////////////////////////////////////////////////////////////*/
 
-    function substring(string memory str, uint startIndex, uint endIndex) public pure returns (string memory) {
+    function substring(string memory str, uint startIndex, uint endIndex) internal pure returns (string memory) {
         bytes memory strBytes = bytes(str);
         bytes memory result = new bytes(endIndex - startIndex);
         for (uint i = startIndex; i < endIndex; i++) {
@@ -143,50 +152,16 @@ contract BIP39 {
         return string(result);
     }
 
-    function toBinaryString(uint256 x) public pure returns (string memory) {
-        string memory result = "";
-        for (uint i = 0; i < 256; i++) {
-            uint8 b = uint8(uint(x) >> i);
-            string memory s = b % 2 == 0 ? "0" : "1";
-            result = string(abi.encodePacked(s, result));
+    function uintToBinaryString(uint256 x, uint256 length) internal pure returns (string memory) {
+        bytes memory result = new bytes(length);
+        for (uint i = 0; i < length; i++) {
+            uint8 b = uint8(uint(x) >> (length - 1 - i));
+            result[i] = b % 2 == 0 ? bytes1(uint8(48)) : bytes1(uint8(49));  // 48 and 49 are '0' and '1' in ASCII
         }
-        return result;
+        return string(result);
     }
 
-
-    function bytesToBytes32(bytes memory source) internal pure returns (bytes32 result) {
-        if (source.length == 0) {
-            return 0x0;
-        }
-        assembly {
-            result := mload(add(source, 32))
-        }
-    }
-
-    function hexStrToBytes(string memory _hexStr) internal pure returns (bytes memory) {
-        require(bytes(_hexStr).length % 2 == 0, "Invalid hexadecimal string");
-        bytes memory bytesArray = new bytes(bytes(_hexStr).length / 2);
-        for (uint i = 0; i < bytesArray.length; i++) {
-            bytesArray[i] = bytes1(uint8(_parseNibble(_hexStr, i*2) * 16 + _parseNibble(_hexStr, i*2 + 1)));
-        }
-        return bytesArray;
-    }
-
-    function _parseNibble(string memory _hexChar, uint _index) internal pure returns (uint8) {
-        uint8 val = uint8(bytes(_hexChar)[_index]);
-        if (val >= uint8(bytes('0')[0]) && val <= uint8(bytes('9')[0])) {
-            return val - uint8(bytes('0')[0]);
-        }
-        if (val >= uint8(bytes('a')[0]) && val <= uint8(bytes('f')[0])) {
-            return 10 + val - uint8(bytes('a')[0]);
-        }
-        if (val >= uint8(bytes('A')[0]) && val <= uint8(bytes('F')[0])) {
-            return 10 + val - uint8(bytes('A')[0]);
-        }
-        revert("Invalid hexadecimal character!");
-    }
-
-    function binaryToUint(string memory binaryString) public pure returns (uint) {
+    function binaryToUint(string memory binaryString) internal pure returns (uint) {
         bytes memory binaryBytes = bytes(binaryString);
         uint result = 0;
         for (uint i = 0; i < binaryBytes.length; i++) {
@@ -197,28 +172,7 @@ contract BIP39 {
         return result;
     }
 
-    function uintToHexString(uint256 value) internal pure returns(string memory) {
-        bytes32 valueBytes32 = bytes32(value);
-        bytes memory byteArray = new bytes(64);
-        for (uint i = 0; i < 32; i++) {
-            byteArray[i*2] = bytes1(_getHexChar(uint8(valueBytes32[i] >> 4)));
-            byteArray[i*2+1] = bytes1(_getHexChar(uint8(valueBytes32[i] & 0x0F)));
-        }
-        return string(byteArray);
+    function min(uint a, uint b) private pure returns (uint) {
+        return a < b ? a : b;
     }
-
-    function _getHexChar(uint8 value) internal pure returns (bytes1) {
-        return value < 10 ? bytes1(uint8(value) + 0x30) : bytes1(uint8(value - 10) + 0x61);
-    }
-
-    function bytesToHexString(bytes memory data) internal pure returns(string memory) {
-        bytes memory alphabet = "0123456789abcdef";
-        bytes memory str = new bytes(2 * data.length);
-        for (uint i = 0; i < data.length; i++) {
-            str[i*2] = alphabet[uint(uint8(data[i] >> 4))];
-            str[1+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
-        }
-        return string(str);
-    }
-
 }

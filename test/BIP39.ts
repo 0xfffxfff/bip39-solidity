@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
 import { wordlists } from "bip39";
 
 import { BIP39, BIP39__factory } from "../typechain-types";
@@ -41,16 +41,26 @@ describe("BIP39", function () {
       expect(await bip39.wordlist(1046)).to.equal("lizard");
     });
 
-    it("Should generate mnemonics", async function () {
-      console.log(await bip39.generateMnemonic(12));
-      console.log(await bip39.generateMnemonic(24));
-      console.log(await bip39.generateMnemonic(3));
-    });
+    for (let i = 1; i <= 8; i++) {
+      it(`Should generate mnemonics with ${
+        i * 3
+      } words and then verify them`, async function () {
+        for (let j = 0; j < 3; j++) {
+          const wordCount = i * 3;
+          const mnemonic = await bip39.generateMnemonic(wordCount);
+          await hre.network.provider.send("hardhat_mine", [
+            `0x${(1).toString(16)}`,
+            "0xC",
+          ]);
+          expect(await bip39.mnemonicToEntropy(mnemonic)).to.not.be.reverted;
+        }
+      });
+    }
 
     it("Should generate a mnemonic from entropy", async function () {
       expect(
         await bip39.entropyToMnemonicString(
-          "ff29322f8356e3c31759e5b508c65522f50efb7f5d5be050429585c81c7df26b"
+          "0xff29322f8356e3c31759e5b508c65522f50efb7f5d5be050429585c81c7df26b"
         )
       ).to.have.ordered.members([
         "you",
@@ -79,7 +89,7 @@ describe("BIP39", function () {
         "initial",
       ]);
       expect(
-        await bip39.entropyToMnemonicString("05c7f9282242fffb")
+        await bip39.entropyToMnemonicString("0x05c7f9282242fffb")
       ).to.have.ordered.members([
         "alarm",
         "divert",
