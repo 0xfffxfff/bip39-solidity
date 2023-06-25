@@ -36,7 +36,7 @@ contract BIP39 {
                                 BIP39
     //////////////////////////////////////////////////////////////*/
 
-    function entropyToMnemonic(bytes memory entropy) public view returns (uint[] memory) {
+    function entropyToMnemonic(bytes memory entropy) public pure returns (uint[] memory) {
         bytes32 hashedEntropy = sha256(entropy);
         string memory binaryEntropy = "";
         for (uint i = 0; i < entropy.length; i++) {
