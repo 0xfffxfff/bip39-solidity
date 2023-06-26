@@ -5,10 +5,7 @@ import {Metadata} from "./Metadata.sol";
 import {Util} from "./Util.sol";
 import {Traits} from "./Traits.sol";
 import {Background} from "./Background.sol";
-import {TextBody} from "./TextBody.sol";
 import {TextLine} from "./TextLine.sol";
-import {TextEdition} from "./TextEdition.sol";
-import {TextOf} from "./TextOf.sol";
 import {Traits} from "./Traits.sol";
 import {SVG} from "./SVG.sol";
 
