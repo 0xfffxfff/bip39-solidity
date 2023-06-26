@@ -2,21 +2,33 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { wordlists } from "bip39";
 
-import { MnemonicPoem, MnemonicPoem__factory } from "../typechain-types";
+import {
+  MnemonicPoem,
+  MnemonicPoem__factory,
+  Render,
+  Render__factory,
+} from "../typechain-types";
 
 describe("MnemonicPoem", function () {
   let MnemonicPoemContractFactory: MnemonicPoem__factory;
   let mnemonicPoem: MnemonicPoem;
+  let RenderContractFactory: Render__factory;
+  let render: Render;
   let signers, owner, addr1, addr2, addr3, addrs;
 
   beforeEach(async function () {
     signers = await ethers.getSigners();
     [owner, addr1, addr2, addr3, ...addrs] = signers;
-    MnemonicPoemContractFactory = await ethers.getContractFactory(
-      "MnemonicPoem"
-    );
 
+    RenderContractFactory = await ethers.getContractFactory("Render");
+    render = await RenderContractFactory.deploy();
+
+    MnemonicPoemContractFactory = await ethers.getContractFactory(
+      "MnemonicPoem",
+      { libraries: { Render: render.address } }
+    );
     mnemonicPoem = await MnemonicPoemContractFactory.deploy();
+
     await mnemonicPoem.deployed();
 
     const CHUNKS = 4;

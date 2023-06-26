@@ -22,7 +22,7 @@ library Render {
         string[] memory words,
         bytes memory entropy,
         string memory base64font
-    ) internal pure returns (string memory) {
+    ) external pure returns (string memory) {
         string memory wordsStr = words[0];
         for (uint i = 1; i < words.length; i++) {
             wordsStr = string(abi.encodePacked(wordsStr, " ", words[i]));
@@ -32,26 +32,26 @@ library Render {
                 _tokenId: _tokenId,
                 _name: _name(_tokenId),
                 _description: wordsStr,
-                _svg: _svg(_tokenId, words, base64font)
+                _attributes: Traits.attributes(words, entropy),
+                _backgroundColor: Traits.backgroundColor(words, entropy),
+                _svg: _svg(words, entropy, base64font)
             });
     }
 
     function renderSVG(
-        uint256 _tokenId,
         string[] memory words,
         bytes memory entropy,
         string memory base64font
-    ) internal pure returns (string memory) {
-        return _svg(_tokenId, words, base64font);
+    ) external pure returns (string memory) {
+        return _svg(words, entropy, base64font);
     }
 
     function renderSVGBase64(
-        uint256 _tokenId,
         string[] memory words,
         bytes memory entropy,
         string memory base64font
-    ) internal pure returns (string memory) {
-        return Metadata._encodeSVG(_svg(_tokenId, words, base64font));
+    ) external pure returns (string memory) {
+        return Metadata._encodeSVG(_svg(words, entropy, base64font));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -59,8 +59,8 @@ library Render {
     //////////////////////////////////////////////////////////////*/
 
     function _svg(
-        uint256 _tokenId,
         string[] memory words,
+        bytes memory entropy,
         string memory base64font
     ) internal pure returns (string memory) {
         return
@@ -75,16 +75,16 @@ library Render {
                     "text {text-transform: uppercase;"
                     "}</style></defs>"
                 ),
-                Background.render(),
-                _renderText(_tokenId, words)
+                Background.render(Traits.backgroundColor(words, entropy)),
+                _renderText(words, Traits.textColor(words, entropy))
             );
     }
 
     function _renderText(
-        uint256 _tokenId,
-        string[] memory mnemonic
+        string[] memory words,
+        string memory textColor
     ) public pure returns (string memory) {
-        uint256 wordCount = mnemonic.length;
+        uint256 wordCount = words.length;
         uint8 charsPerLine = 24;
         if (wordCount == 21) charsPerLine = 22;
         else if (wordCount == 18) charsPerLine = 20;
@@ -99,25 +99,23 @@ library Render {
         string memory line;
         uint256 lineCount = 0;
 
-        for (uint256 i = 0; i < mnemonic.length; i++) {
-            string memory nextWord = mnemonic[i];
-            // the +1 accounts for the space
+        for (uint256 i = 0; i < words.length; i++) {
             if (
                 bytes(line).length != 0 &&
-                bytes(line).length + bytes(nextWord).length + 1 > charsPerLine
+                bytes(line).length + bytes(words[i]).length + 1 > charsPerLine
             ) {
                 tempLines[lineCount] = line;
                 lineCount++;
-                line = nextWord;
+                line = words[i];
             } else {
                 if (bytes(line).length != 0) {
-                    line = string(abi.encodePacked(line, " ", nextWord));
+                    line = string(abi.encodePacked(line, " ", words[i]));
                 } else {
-                    line = nextWord;
+                    line = words[i];
                 }
             }
 
-            if (i == mnemonic.length - 1) {
+            if (i == words.length - 1) {
                 tempLines[lineCount] = line;
             }
         }
@@ -155,16 +153,15 @@ library Render {
             yDistance = 66;
         }
 
-        uint256 topOffset = 444 - (lineCount * yDistance) / 2;
-
         bytes memory svgTexts;
         for (uint256 i = 0; i <= lineCount; i++) {
             svgTexts = abi.encodePacked(
                 svgTexts,
                 TextLine.render(
                     tempLines[i],
-                    topOffset + (i * yDistance),
-                    fontSize
+                    (444 - (lineCount * yDistance) / 2) + (i * yDistance),
+                    fontSize,
+                    textColor
                 )
             );
         }

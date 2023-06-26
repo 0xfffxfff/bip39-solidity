@@ -12,8 +12,8 @@ library Metadata {
         uint256 _tokenId,
         string memory _name,
         string memory _description,
-        // string memory _attributes,
-        // string memory _color,
+        string memory _attributes,
+        string memory _backgroundColor,
         string memory _svg
     ) internal pure returns (string memory) {
         string memory metadata = string.concat(
@@ -23,10 +23,10 @@ library Metadata {
             Util.keyValue("name", _name),
             ",",
             Util.keyValue("description", _description),
-            // ",",
-            // Util.keyValueNoQuotes("attributes", _attributes),
-            // ",",
-            // Util.keyValue("color", _color),
+            ",",
+            Util.keyValueNoQuotes("attributes", _attributes),
+            ",",
+            Util.keyValue("backgroundColor", _backgroundColor),
             ",",
             Util.keyValue("image", _encodeSVG(_svg)),
             "}"

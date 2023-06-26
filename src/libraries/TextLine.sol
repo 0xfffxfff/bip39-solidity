@@ -10,9 +10,10 @@ library TextLine {
     //////////////////////////////////////////////////////////////*/
 
     function render(
-        string memory _text,
+        string memory text,
         uint256 yOffset,
-        string memory fontSize
+        string memory fontSize,
+        string memory textColor
     ) internal pure returns (string memory) {
         return
             SVG.element(
@@ -21,10 +22,10 @@ library TextLine {
                     _fontSize: fontSize,
                     _fontFamily: "Bebas Neue, Impact, sans-serif",
                     _coords: ["67", Util.uint256ToString(yOffset)],
-                    _fill: "white",
+                    _fill: textColor,
                     _attributes: 'dy="0.4em"' // offset text so yCoord aligns with top of text (for Bebas Neue)
                 }),
-                _text
+                text
             );
     }
 }

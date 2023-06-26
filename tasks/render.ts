@@ -14,9 +14,9 @@ task("render", "Render a Token")
     await mkdir("./render", { recursive: true });
 
     const totalSupply = await MnemonicPoemArtifact.totalSupply();
-    console.log(await MnemonicPoemArtifact.mnemonics(1));
-    console.log(totalSupply.toNumber());
+    console.log(`Rendering ${totalSupply.toNumber()} tokens`);
     for (let i = 1; i <= totalSupply.toNumber(); i++) {
+      console.log(await MnemonicPoemArtifact.mnemonics(i));
       const svg = await MnemonicPoemArtifact.renderSVG(i);
       await writeFile(`./render/${i}.svg`, svg);
     }

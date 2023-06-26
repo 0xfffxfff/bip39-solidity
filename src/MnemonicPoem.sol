@@ -25,7 +25,7 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
 
     address private font;
 
-    constructor() ERC721("Mnemonic Poem", "MNEMO") Owned(msg.sender) {}
+    constructor() ERC721("Mnemonic Poem", "MNEMONIC") Owned(msg.sender) {}
 
     /*//////////////////////////////////////////////////////////////
                                   Mint
@@ -128,12 +128,11 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
     //////////////////////////////////////////////////////////////*/
 
     function renderSVG(uint256 _tokenId) external view returns (string memory) {
-        Mnemonic memory mnemonic = mnemonics[_tokenId];
         return
             Render.renderSVG(
                 _tokenId,
-                indicesToWords(mnemonic.indices),
-                mnemonic.entropy,
+                indicesToWords(mnemonics[_tokenId].indices),
+                mnemonics[_tokenId].entropy,
                 getFont()
             );
     }
@@ -141,12 +140,11 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
     function renderSVGBase64(
         uint256 _tokenId
     ) external view returns (string memory) {
-        Mnemonic memory mnemonic = mnemonics[_tokenId];
         return
             Render.renderSVGBase64(
                 _tokenId,
-                indicesToWords(mnemonic.indices),
-                mnemonic.entropy,
+                indicesToWords(mnemonics[_tokenId].indices),
+                mnemonics[_tokenId].entropy,
                 getFont()
             );
     }
@@ -155,12 +153,11 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
         uint256 _tokenId
     ) public view override returns (string memory) {
         require(_ownerOf[_tokenId] != address(0), "NOT_MINTED");
-        Mnemonic memory mnemonic = mnemonics[_tokenId];
         return
             Render.tokenURI(
                 _tokenId,
-                indicesToWords(mnemonic.indices),
-                mnemonic.entropy,
+                indicesToWords(mnemonics[_tokenId].indices),
+                mnemonics[_tokenId].entropy,
                 getFont()
             );
     }

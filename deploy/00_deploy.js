@@ -3,6 +3,8 @@
 module.exports = async ({ deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
+
+  const renderLibrary = await deploy("Render", { from: deployer, log: true });
   await deploy("MnemonicPoem", {
     args: [],
     from: deployer,
@@ -10,7 +12,10 @@ module.exports = async ({ deployments }) => {
     log: true,
     // nonce: 0,
     // gasPrice: 60_000_000_000 // 60
+    libraries: {
+      Render: renderLibrary.address,
+    },
   });
 };
 
-module.exports.tags = ["MnemonicPoem"];
+module.exports.tags = ["MnemonicPoem", "Render"];
