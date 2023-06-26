@@ -9,6 +9,7 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
 
     struct Mnemonic {
         uint256[] indices;
+        bytes entropy;
         bool bound;
     }
     mapping(uint256 => Mnemonic) public mnemonics;
@@ -38,8 +39,8 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
         uint id = ++totalSupply;
 
         // This generates the entropy from the mnemonic indices
-        // and serves us to validate the mnemonic.
-        mnemonicToEntropy(mnemonicIndices);
+        // and simultaneously validates the mnemonic.
+        bytes memory entropy = mnemonicToEntropy(mnemonicIndices);
 
         // Words can only be minted once
         for (uint i = 0; i < mnemonicIndices.length; i++) {
@@ -51,7 +52,11 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
         totalWords += mnemonicIndices.length;
 
         // Store the mnemonic
-        mnemonics[id].indices = mnemonicIndices;
+        mnemonics[id] = Mnemonic({
+            indices: mnemonicIndices,
+            entropy: entropy,
+            bound: false
+        });
 
         // Mint the token
         _mint(msg.sender, id);
