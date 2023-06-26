@@ -12,7 +12,7 @@ task("mint", "Mint a Token")
       MnemonicPoem.address
     );
 
-    const wordCount = 3; //(Math.floor(Math.random() * 8) + 1) * 3;
+    const wordCount = (Math.floor(Math.random() * 8) + 1) * 3;
     const mnemonicIndices = await MnemonicPoemArtifact.generateMnemonic(
       wordCount
     );

@@ -10,10 +10,12 @@ import "hardhat-preprocessor";
 import "hardhat-gas-reporter";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
+import "./tasks/render";
 import "./tasks/words-commit";
 import "./tasks/mint";
 import "./tasks/lock";
 import "./tasks/unlock";
+import "./tasks/font";
 
 const config: HardhatUserConfig = {
   solidity: {

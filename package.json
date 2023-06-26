@@ -3,13 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "0xfff <0xfff@protonmail.com>",
   "license": "Unlicense",
   "devDependencies": {
@@ -21,11 +14,12 @@
     "hardhat": "^2.11.2",
     "hardhat-gas-reporter": "^1.0.9",
     "hardhat-preprocessor": "^0.1.5",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-deploy": "^0.11.34",
     "typechain": "^8.1.0"
   },
   "dependencies": {
-    "hardhat-contract-sizer": "^2.10.0",
-    "hardhat-deploy": "^0.11.34",
-    "solmate": "^6.1.0"
+    "solady": "0.0.107",
+    "solmate": "6.1.0"
   }
 }

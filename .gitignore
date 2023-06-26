@@ -22,3 +22,6 @@ cache
 artifacts
 cache_hardhat
 
+#
+render
+deployments/localhost

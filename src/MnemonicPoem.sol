@@ -3,10 +3,11 @@ pragma solidity ^0.8.17;
 
 import "solmate/src/tokens/ERC721.sol";
 import "solmate/src/auth/Owned.sol";
+import "solady/src/utils/SSTORE2.sol";
 import "./BIP39.sol";
+import {Render} from "./libraries/Render.sol";
 
 contract MnemonicPoem is ERC721, BIP39, Owned {
-
     struct Mnemonic {
         uint256[] indices;
         bytes entropy;
@@ -21,6 +22,8 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
 
     mapping(uint256 => bool) public isIndexMinted;
     uint256 totalWords = 0; // total minted words
+
+    address private font;
 
     constructor() ERC721("Mnemonic Poem", "MNEMO") Owned(msg.sender) {}
 
@@ -77,14 +80,6 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
     }
 
     /*//////////////////////////////////////////////////////////////
-                                 RENDER
-    //////////////////////////////////////////////////////////////*/
-
-    function tokenURI(uint256 id) public view override returns (string memory) {
-        return "";
-    }
-
-    /*//////////////////////////////////////////////////////////////
                                  BINDING
     //////////////////////////////////////////////////////////////*/
 
@@ -128,4 +123,57 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
         super.safeTransferFrom(from, to, id, data);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                                 RENDER
+    //////////////////////////////////////////////////////////////*/
+
+    function renderSVG(uint256 _tokenId) external view returns (string memory) {
+        Mnemonic memory mnemonic = mnemonics[_tokenId];
+        return
+            Render.renderSVG(
+                _tokenId,
+                indicesToWords(mnemonic.indices),
+                mnemonic.entropy,
+                getFont()
+            );
+    }
+
+    function renderSVGBase64(
+        uint256 _tokenId
+    ) external view returns (string memory) {
+        Mnemonic memory mnemonic = mnemonics[_tokenId];
+        return
+            Render.renderSVGBase64(
+                _tokenId,
+                indicesToWords(mnemonic.indices),
+                mnemonic.entropy,
+                getFont()
+            );
+    }
+
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override returns (string memory) {
+        require(_ownerOf[_tokenId] != address(0), "NOT_MINTED");
+        Mnemonic memory mnemonic = mnemonics[_tokenId];
+        return
+            Render.tokenURI(
+                _tokenId,
+                indicesToWords(mnemonic.indices),
+                mnemonic.entropy,
+                getFont()
+            );
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Font
+    ///////////////////////////////////////////////////////////////////////////
+
+    function setFont(string calldata fontString) external onlyOwner {
+        font = SSTORE2.write(bytes(fontString));
+    }
+
+    function getFont() public view returns (string memory) {
+        return string(abi.encodePacked(SSTORE2.read(font)));
+    }
 }
