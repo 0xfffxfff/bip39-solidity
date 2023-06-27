@@ -9,14 +9,16 @@ library Background {
                                  RENDER
     //////////////////////////////////////////////////////////////*/
 
-    function render() internal pure returns (string memory) {
+    function render(
+        string memory backgroundColor
+    ) internal pure returns (string memory) {
         return
             SVG.element(
                 "rect",
                 SVG.rectAttributes({
                     _width: "100%",
                     _height: "100%",
-                    _fill: "#000",
+                    _fill: backgroundColor,
                     _attributes: ""
                 })
             );

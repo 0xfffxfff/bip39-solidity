@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { wordlists, generateMnemonic } from "bip39";
 
 task("mint", "Mint a Token")
-  // .addParam("id", "The ID of the mintpass")
+  .addParam("amount", "Amount of tokens to mint", "1")
   .setAction(async (taskArgs, hre) => {
     // const chainId = await hre.getChainId();
     const MnemonicPoem = await hre.deployments.get("MnemonicPoem");
@@ -12,19 +12,26 @@ task("mint", "Mint a Token")
       MnemonicPoem.address
     );
 
-    const wordCount = (Math.floor(Math.random() * 8) + 1) * 3;
-    const mnemonicIndices = await MnemonicPoemArtifact.generateMnemonic(
-      wordCount
-    );
-    const mnemonic = mnemonicIndices.map(
-      (i) => wordlists.english[i.toNumber()]
-    );
+    const amount = parseInt(taskArgs.amount, 10);
 
-    console.log(`Minting: ${mnemonic.join(" ")}`);
+    const choices = [
+      3, 3, 3, 3, 3, 6, 6, 6, 6, 9, 9, 12, 12, 12, 12, 12, 15, 18, 21, 24, 24,
+    ];
 
-    await MnemonicPoemArtifact.mint(mnemonicIndices, {
-      value: hre.ethers.utils.parseEther("0.01").mul(wordCount.toString()),
-    });
+    for (let i = 0; i < amount; i++) {
+      const wordCount = choices[Math.floor(Math.random() * choices.length)];
+      const mnemonicIndices = await MnemonicPoemArtifact.generateMnemonic(
+        wordCount
+      );
+      const mnemonic = mnemonicIndices.map(
+        (i) => wordlists.english[i.toNumber()]
+      );
 
+      console.log(`Minting: ${mnemonic.join(" ")}`);
+
+      await MnemonicPoemArtifact.mint(mnemonicIndices, {
+        value: hre.ethers.utils.parseEther("0.01").mul(wordCount.toString()),
+      });
+    }
     console.log(`All Done!`);
   });

@@ -8,6 +8,7 @@ import {Background} from "./Background.sol";
 import {TextLine} from "./TextLine.sol";
 import {Traits} from "./Traits.sol";
 import {SVG} from "./SVG.sol";
+import {Effect} from "./Effect.sol";
 
 /// @notice Adopted from Bibos (0xf528e3381372c43f5e8a55b3e6c252e32f1a26e4)
 library Render {
@@ -69,27 +70,54 @@ library Render {
                 SVG.svgAttributes(),
                 string.concat(
                     "<defs><style>",
-                    '@font-face {font-family: "Bebas Neue";src: url("',
+                    '@font-face {font-family: "EBGI";src: url("',
                     base64font,
-                    '");}',
-                    "text {text-transform: uppercase;"
-                    "}</style></defs>"
+                    '");',
+                    // "text {text-transform: uppercase;"
+                    "}</style>",
+                    Effect.vhsFilter(
+                        words.length <= 3 ? 4 : words.length <= 6
+                            ? 3
+                            : words.length <= 9
+                            ? 2
+                            : 1,
+                        Traits.distortionType(entropy),
+                        keccak256(
+                            abi.encodePacked(Traits.textColor(words, entropy))
+                        ) == keccak256(abi.encodePacked("#000000"))
+                    ),
+                    "</defs>"
                 ),
                 Background.render(Traits.backgroundColor(words, entropy)),
-                _renderText(words, Traits.textColor(words, entropy))
+                SVG.element(
+                    "g",
+                    string.concat(
+                        SVG.filterAttribute("vhs"),
+                        " ",
+                        'transform="rotate(',
+                        Traits.textRotation(words, entropy),
+                        ')"'
+                    ),
+                    _renderText(
+                        words,
+                        entropy,
+                        Traits.textColor(words, entropy)
+                    )
+                )
             );
     }
 
     function _renderText(
         string[] memory words,
+        bytes memory entropy,
         string memory textColor
     ) public pure returns (string memory) {
         uint256 wordCount = words.length;
-        uint8 charsPerLine = 24;
-        if (wordCount == 21) charsPerLine = 22;
-        else if (wordCount == 18) charsPerLine = 20;
-        else if (wordCount == 15) charsPerLine = 18;
-        else if (wordCount == 12) charsPerLine = 17;
+        uint8 charsPerLine = 20;
+        if (wordCount == 21) charsPerLine = 19;
+        else if (wordCount == 18) charsPerLine = 18;
+        else if (wordCount == 15) charsPerLine = 17;
+        else if (wordCount == 12) charsPerLine = 16;
         else if (wordCount == 9) charsPerLine = 15;
         else if (wordCount == 6) charsPerLine = 12;
         else if (wordCount == 3) charsPerLine = 9;
@@ -120,14 +148,6 @@ library Render {
             }
         }
 
-        //  3 words: fontSize 125 / measured yDistance 120 at lineHeight 96%
-        //  6 words: fontSize 93  / measured yDistance 93 at lineHeight 100%
-        //  9 words: fontSize 75  / measured yDistance 81 at lineHeight 108%
-        // 12 words: fontSize 75  / measured yDistance 84 at lineHeight 112%
-        // 15 words: fontSize 65  / measured yDistance 76 at lineHeight 116%
-        // 18 words: fontSize 62  / measured yDistance 71 at lineHeight 118%
-        // 21 words: fontSize 57  / measured yDistance 67 at lineHeight 118%
-        // 24 words: fontSize 55  / measured yDistance 66 at lineHeight 120%
         string memory fontSize = "125";
         uint256 yDistance = 120;
         if (wordCount == 6) {
@@ -135,30 +155,38 @@ library Render {
             yDistance = 93;
         } else if (wordCount == 9) {
             fontSize = "75";
-            yDistance = 81;
+            yDistance = 75;
         } else if (wordCount == 12) {
             fontSize = "75";
-            yDistance = 84;
+            yDistance = 75;
         } else if (wordCount == 15) {
             fontSize = "65";
-            yDistance = 76;
+            yDistance = 65;
         } else if (wordCount == 18) {
             fontSize = "62";
-            yDistance = 71;
+            yDistance = 62;
         } else if (wordCount == 21) {
             fontSize = "57";
-            yDistance = 67;
+            yDistance = 57;
         } else if (wordCount == 24) {
             fontSize = "55";
-            yDistance = 66;
+            yDistance = 55;
         }
 
+        uint256 rotationSeed = Traits._rarity(entropy, "rotation");
+        bool isPositive = rotationSeed % 2 == 0;
+        uint256 degrees = (rotationSeed / 10) % 6;
         bytes memory svgTexts;
         for (uint256 i = 0; i <= lineCount; i++) {
             svgTexts = abi.encodePacked(
                 svgTexts,
                 TextLine.render(
                     tempLines[i],
+                    (
+                        isPositive
+                            ? 90 + degrees * (words.length > 12 ? 1 : 2)
+                            : 90 - degrees * (words.length > 12 ? 1 : 2)
+                    ),
                     (444 - (lineCount * yDistance) / 2) + (i * yDistance),
                     fontSize,
                     textColor

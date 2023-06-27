@@ -11,6 +11,7 @@ library TextLine {
 
     function render(
         string memory text,
+        uint256 xOffset,
         uint256 yOffset,
         string memory fontSize,
         string memory textColor
@@ -20,10 +21,13 @@ library TextLine {
                 "text",
                 SVG.textAttributes({
                     _fontSize: fontSize,
-                    _fontFamily: "Bebas Neue, Impact, sans-serif",
-                    _coords: ["67", Util.uint256ToString(yOffset)],
+                    _fontFamily: "EBGI, EB Garamond Italic, Garamond Italic, EB Garamond, Garamond, serif",
+                    _coords: [
+                        Util.uint256ToString(xOffset),
+                        Util.uint256ToString(yOffset)
+                    ],
                     _fill: textColor,
-                    _attributes: 'dy="0.4em"' // offset text so yCoord aligns with top of text (for Bebas Neue)
+                    _attributes: 'dy="0.4em"' // offset text so yCoord aligns with top of text (magic number)
                 }),
                 text
             );
