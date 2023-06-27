@@ -20,7 +20,8 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
 
     bool public locked = true; // prevent minting
 
-    mapping(uint256 => bool) public isIndexMinted;
+    // mapping(uint256 => bool) public isIndexMinted;
+    mapping(bytes32 => bool) public isEntropyMinted;
     uint256 totalWords = 0; // total minted words
 
     address private font;
@@ -46,13 +47,18 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
         bytes memory entropy = mnemonicToEntropy(mnemonicIndices);
 
         // Words can only be minted once
-        for (uint i = 0; i < mnemonicIndices.length; i++) {
-            require(!isIndexMinted[mnemonicIndices[i]], "WORD_ALREADY_MINTED");
-            isIndexMinted[mnemonicIndices[i]] = true;
-        }
+        // for (uint i = 0; i < mnemonicIndices.length; i++) {
+        //     require(!isIndexMinted[mnemonicIndices[i]], "WORD_ALREADY_MINTED");
+        //     isIndexMinted[mnemonicIndices[i]] = true;
+        // }
+        // hash entropy to check if it has been minted
+        bytes32 entropyHash = keccak256(entropy);
+        require(!isEntropyMinted[entropyHash], "MNEMONIC_ALREADY_MINTED");
+        isEntropyMinted[entropyHash] = true;
 
         // Keep track of words minted
         totalWords += mnemonicIndices.length;
+        require(totalWords < 2048, "MINTABLE_WORD_LIMIT_REACHED_2048");
 
         // Store the mnemonic
         mnemonics[id] = Mnemonic({
@@ -130,7 +136,6 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
     function renderSVG(uint256 _tokenId) external view returns (string memory) {
         return
             Render.renderSVG(
-                _tokenId,
                 indicesToWords(mnemonics[_tokenId].indices),
                 mnemonics[_tokenId].entropy,
                 getFont()
@@ -142,7 +147,6 @@ contract MnemonicPoem is ERC721, BIP39, Owned {
     ) external view returns (string memory) {
         return
             Render.renderSVGBase64(
-                _tokenId,
                 indicesToWords(mnemonics[_tokenId].indices),
                 mnemonics[_tokenId].entropy,
                 getFont()
