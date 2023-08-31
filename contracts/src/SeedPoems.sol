@@ -51,31 +51,6 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
                                  MINT
     //////////////////////////////////////////////////////////////*/
 
-    function mint(
-        uint256[] memory seedIndices
-    )
-        external
-        payable
-        nonReentrant
-        publicMintChecks(seedIndices.length)
-    {
-        _mintPoem(seedIndices, msg.sender, false);
-    }
-
-    function mintArtist(
-        uint256[] memory seedIndices,
-        address to,
-        bool bound
-    )
-        external
-        payable
-        onlyOwner
-        ownerMintChecks(seedIndices.length)
-        nonReentrant
-    {
-        _mintPoem(seedIndices, to, bound);
-    }
-
     function _mintPoem(
         uint256[] memory seedIndices,
         address to,
@@ -108,6 +83,31 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
 
         // Mint the token
         _mint(to, id);
+    }
+
+    function mint(
+        uint256[] memory seedIndices
+    )
+        external
+        payable
+        nonReentrant
+        publicMintChecks(seedIndices.length)
+    {
+        _mintPoem(seedIndices, msg.sender, false);
+    }
+
+    function mintArtist(
+        uint256[] memory seedIndices,
+        address to,
+        bool bound
+    )
+        external
+        payable
+        onlyOwner
+        ownerMintChecks(seedIndices.length)
+        nonReentrant
+    {
+        _mintPoem(seedIndices, to, bound);
     }
 
     /*//////////////////////////////////////////////////////////////
