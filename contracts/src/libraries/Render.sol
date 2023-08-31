@@ -195,9 +195,9 @@ library Render {
         uint256 rotationSeed = Traits._rarity(entropy, "rotation");
         bool isPositive = rotationSeed % 2 == 0;
         uint256 degrees = (rotationSeed / 10) % 6;
-        bytes memory svgTexts;
+        string memory svgTexts;
         for (uint256 i = 0; i <= lineCount; i++) {
-            svgTexts = abi.encodePacked(
+            svgTexts = string.concat(
                 svgTexts,
                 TextLine.render(
                     tempLines[i],
@@ -213,6 +213,6 @@ library Render {
             );
         }
 
-        return SVG.element("g", "", string(svgTexts));
+        return SVG.element("g", "", svgTexts);
     }
 }

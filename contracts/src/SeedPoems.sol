@@ -130,7 +130,6 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
         revert('IMPLEMENT_ME');
     }
 
-    // Inherit natspec
     function transferFrom(
         address from,
         address to,

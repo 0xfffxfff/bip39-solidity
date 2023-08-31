@@ -41,8 +41,12 @@ describe("SeedPoems", function () {
     await seedPoem.finalizeWords();
   });
 
-  describe("Deployment", function () {
-    it("Should allow to mint a mnemonic", async function () {
+  describe("Mintable", function () {
+    it("Should fail to mint while paused", async function () {
+      await expect(seedPoem.mint([])).to.be.revertedWithCustomError(seedPoem, 'Paused');
+      await seedPoem.setPause(false);
+    });
+    it("Should allow public to mint a mnemonic", async function () {
       await expect(seedPoem.mint([])).to.be.revertedWithCustomError(seedPoem, 'Paused');
       await seedPoem.setPause(false);
       expect(
@@ -83,6 +87,30 @@ describe("SeedPoems", function () {
           ["lawn", "actual", "brick"].map((word) =>
             wordlists.english.indexOf(word)
           ),
+          {
+            value: ethers.utils.parseEther("0.03")//.mul("3"),
+          }
+        )
+      ).to.not.be.reverted;
+    });
+    it("Should allow artist to mint a mnemonic", async function () {
+      await expect(
+        seedPoem.connect(addr2).mintArtist(
+          ["lawn", "actual", "brick"].map((word) => wordlists.english.indexOf(word)),
+          await owner.getAddress(),
+          false,
+          {
+            value: ethers.utils.parseEther("0.03")//.mul("24"),
+          }
+        )
+      ).to.revertedWithCustomError(seedPoem, 'Unauthorized');
+      expect(
+        await seedPoem.connect(owner).mintArtist(
+          ["lawn", "actual", "brick"].map((word) =>
+            wordlists.english.indexOf(word)
+          ),
+          await owner.getAddress(),
+          false,
           {
             value: ethers.utils.parseEther("0.03")//.mul("3"),
           }
