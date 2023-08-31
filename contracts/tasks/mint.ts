@@ -6,9 +6,9 @@ task("mint", "Mint a Token")
   .addParam("amount", "Amount of tokens to mint", "1")
   .setAction(async (taskArgs, hre) => {
     // const chainId = await hre.getChainId();
-    const MnemonicPoem = await hre.deployments.get("MnemonicPoem");
+    const MnemonicPoem = await hre.deployments.get("SeedPoems");
     const MnemonicPoemArtifact = await hre.ethers.getContractAt(
-      "MnemonicPoem",
+      "SeedPoems",
       MnemonicPoem.address
     );
 

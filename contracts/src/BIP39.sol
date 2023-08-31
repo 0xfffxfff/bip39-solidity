@@ -106,8 +106,18 @@ contract BIP39 {
         return mnemonicIndices;
     }
 
+    function generateMnemonic(uint256 words, bytes memory entropy) public pure returns (uint[] memory) {
+        require(words >= 3 && words <= 24 && words % 3 == 0, "Invalid word count");
+        uint[] memory mnemonicIndices = entropyToMnemonic(entropy);
+        return mnemonicIndices;
+    }
+
     function generateMnemonicString(uint256 words) public view returns (string[] memory) {
         return indicesToWords(generateMnemonic(words));
+    }
+
+    function generateMnemonicString(uint256 words, bytes memory entropy) public view returns (string[] memory) {
+        return indicesToWords(generateMnemonic(words, entropy));
     }
 
     function indicesToWords(uint256[] memory indices) public view returns (string[] memory) {
@@ -137,7 +147,6 @@ contract BIP39 {
         }
         return entropy;
     }
-
 
     /*//////////////////////////////////////////////////////////////
                                 Utility

@@ -1,9 +1,9 @@
 import { task } from "hardhat/config";
 
 task("font", "Set Font").setAction(async (taskArgs, hre) => {
-  const MnemonicPoem = await hre.deployments.get("MnemonicPoem");
+  const MnemonicPoem = await hre.deployments.get("SeedPoems");
   const MnemonicPoemArtifact = await hre.ethers.getContractAt(
-    "MnemonicPoem",
+    "SeedPoems",
     MnemonicPoem.address
   );
 

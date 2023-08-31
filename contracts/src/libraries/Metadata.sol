@@ -14,7 +14,8 @@ library Metadata {
         string memory _description,
         string memory _attributes,
         string memory _backgroundColor,
-        string memory _svg
+        string memory _svg,
+        string memory _animation
     ) internal pure returns (string memory) {
         string memory metadata = string.concat(
             "{",
@@ -29,6 +30,8 @@ library Metadata {
             Util.keyValue("backgroundColor", _backgroundColor),
             ",",
             Util.keyValue("image", _encodeSVG(_svg)),
+            ",",
+            Util.keyValue("animation_url", _encodeSVG(_animation)),
             "}"
         );
 

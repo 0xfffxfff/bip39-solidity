@@ -10,9 +10,8 @@ import {Traits} from "./Traits.sol";
 import {SVG} from "./SVG.sol";
 import {Effect} from "./Effect.sol";
 
-/// @notice Adopted from Bibos (0xf528e3381372c43f5e8a55b3e6c252e32f1a26e4)
 library Render {
-    string public constant description = "Mnemonic Poems";
+    string public constant description = "Seed Poems";
 
     /*//////////////////////////////////////////////////////////////
                                 TOKENURI
@@ -24,18 +23,19 @@ library Render {
         bytes memory entropy,
         string memory base64font
     ) external pure returns (string memory) {
-        string memory wordsStr = words[0];
+        string memory wordString = words[0];
         for (uint i = 1; i < words.length; i++) {
-            wordsStr = string(abi.encodePacked(wordsStr, " ", words[i]));
+            wordString = string.concat(wordString, " ", words[i]);
         }
         return
             Metadata.encodeMetadata({
                 _tokenId: _tokenId,
-                _name: _name(_tokenId),
-                _description: wordsStr,
+                _name: wordString,
+                _description: wordString,
                 _attributes: Traits.attributes(words, entropy),
                 _backgroundColor: Traits.backgroundColor(words, entropy),
-                _svg: _svg(words, entropy, base64font)
+                _svg: _svg(words, entropy, base64font, false),
+                _animation: _svg(words, entropy, base64font, true)
             });
     }
 
@@ -44,7 +44,7 @@ library Render {
         bytes memory entropy,
         string memory base64font
     ) external pure returns (string memory) {
-        return _svg(words, entropy, base64font);
+        return _svg(words, entropy, base64font, true);
     }
 
     function renderSVGBase64(
@@ -52,7 +52,23 @@ library Render {
         bytes memory entropy,
         string memory base64font
     ) external pure returns (string memory) {
-        return Metadata._encodeSVG(_svg(words, entropy, base64font));
+        return Metadata._encodeSVG(_svg(words, entropy, base64font, true));
+    }
+
+    function renderSVGstatic(
+        string[] memory words,
+        bytes memory entropy,
+        string memory base64font
+    ) external pure returns (string memory) {
+        return _svg(words, entropy, base64font, false);
+    }
+
+    function renderSVGBase64static(
+        string[] memory words,
+        bytes memory entropy,
+        string memory base64font
+    ) external pure returns (string memory) {
+        return Metadata._encodeSVG(_svg(words, entropy, base64font, false));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -62,7 +78,8 @@ library Render {
     function _svg(
         string[] memory words,
         bytes memory entropy,
-        string memory base64font
+        string memory base64font,
+        bool animate
     ) internal pure returns (string memory) {
         return
             SVG.element(
@@ -84,7 +101,8 @@ library Render {
                         Traits.distortionType(entropy),
                         keccak256(
                             abi.encodePacked(Traits.textColor(words, entropy))
-                        ) == keccak256(abi.encodePacked("#000000"))
+                        ) == keccak256(abi.encodePacked("#000000")),
+                        animate
                     ),
                     "</defs>"
                 ),
@@ -123,7 +141,8 @@ library Render {
         else if (wordCount == 3) charsPerLine = 9;
         else if (wordCount != 24) revert("Invalid words per line");
 
-        string[] memory tempLines = new string[](wordCount); // worst-case scenario, one word per line
+        // the worst-case scenario is one word per line
+        string[] memory tempLines = new string[](wordCount);
         string memory line;
         uint256 lineCount = 0;
 
@@ -195,10 +214,5 @@ library Render {
         }
 
         return SVG.element("g", "", string(svgTexts));
-    }
-
-    function _name(uint256 _tokenId) internal pure returns (string memory) {
-        return
-            string.concat("Mnemonic Poem ", Util.uint256ToString(_tokenId, 3));
     }
 }

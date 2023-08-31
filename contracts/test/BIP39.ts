@@ -47,7 +47,7 @@ describe("BIP39", function () {
       } words and then verify them`, async function () {
         for (let j = 0; j < 3; j++) {
           const wordCount = i * 3;
-          const mnemonic = await bip39.generateMnemonic(wordCount);
+          const mnemonic = await bip39["generateMnemonic(uint256)"](wordCount);
           await hre.network.provider.send("hardhat_mine", [
             `0x${(1).toString(16)}`,
             "0xC",

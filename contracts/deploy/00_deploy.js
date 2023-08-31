@@ -5,7 +5,7 @@ module.exports = async ({ deployments }) => {
   const { deployer } = await getNamedAccounts();
 
   const renderLibrary = await deploy("Render", { from: deployer, log: true });
-  await deploy("MnemonicPoem", {
+  await deploy("SeedPoems", {
     args: [],
     from: deployer,
     gasLimit: 18_000_000,
@@ -18,4 +18,4 @@ module.exports = async ({ deployments }) => {
   });
 };
 
-module.exports.tags = ["MnemonicPoem", "Render"];
+module.exports.tags = ["SeedPoems", "Render"];

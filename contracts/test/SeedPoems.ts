@@ -3,18 +3,19 @@ import { ethers } from "hardhat";
 import { wordlists } from "bip39";
 
 import {
-  MnemonicPoem,
-  MnemonicPoem__factory,
+  SeedPoems,
+  SeedPoems__factory,
   Render,
   Render__factory,
 } from "../typechain-types";
+import { Signer } from "ethers";
 
-describe("MnemonicPoem", function () {
-  let MnemonicPoemContractFactory: MnemonicPoem__factory;
-  let mnemonicPoem: MnemonicPoem;
+describe("SeedPoems", function () {
+  let SeedPoemsContractFactory: SeedPoems__factory;
+  let seedPoem: SeedPoems;
   let RenderContractFactory: Render__factory;
   let render: Render;
-  let signers, owner, addr1, addr2, addr3, addrs;
+  let signers: Signer[], owner: Signer, addr1: Signer, addr2: Signer, addr3: Signer, addrs: Signer[];
 
   beforeEach(async function () {
     signers = await ethers.getSigners();
@@ -23,30 +24,29 @@ describe("MnemonicPoem", function () {
     RenderContractFactory = await ethers.getContractFactory("Render");
     render = await RenderContractFactory.deploy();
 
-    MnemonicPoemContractFactory = await ethers.getContractFactory(
-      "MnemonicPoem",
-      { libraries: { Render: render.address } }
-    );
-    mnemonicPoem = await MnemonicPoemContractFactory.deploy();
+    SeedPoemsContractFactory = await ethers.getContractFactory("SeedPoems", {
+      libraries: { Render: render.address },
+    });
+    seedPoem = await SeedPoemsContractFactory.deploy();
 
-    await mnemonicPoem.deployed();
+    await seedPoem.deployed();
 
     const CHUNKS = 4;
     for (let i = 0; i < CHUNKS; i++) {
       let count = wordlists.english.length / CHUNKS;
       let offset = count * i;
       let chunk = wordlists.english.slice(offset, offset + count);
-      await mnemonicPoem.commitWords(chunk, offset);
+      await seedPoem.commitWords(chunk, offset);
     }
-    await mnemonicPoem.finalizeWords();
+    await seedPoem.finalizeWords();
   });
 
   describe("Deployment", function () {
     it("Should allow to mint a mnemonic", async function () {
-      await expect(mnemonicPoem.mint([])).to.be.revertedWith("LOCKED");
-      await mnemonicPoem.lock(false);
+      await expect(seedPoem.mint([])).to.be.revertedWithCustomError(seedPoem, 'Paused');
+      await seedPoem.setPause(false);
       expect(
-        await mnemonicPoem.mint(
+        await seedPoem.connect(addr2).mint(
           [
             "you",
             "end",
@@ -74,17 +74,17 @@ describe("MnemonicPoem", function () {
             "initial",
           ].map((word) => wordlists.english.indexOf(word)),
           {
-            value: ethers.utils.parseEther("0.01").mul("24"),
+            value: ethers.utils.parseEther("0.03")//.mul("24"),
           }
         )
       ).to.not.be.reverted;
       expect(
-        await mnemonicPoem.mint(
+        await seedPoem.connect(addr3).mint(
           ["lawn", "actual", "brick"].map((word) =>
             wordlists.english.indexOf(word)
           ),
           {
-            value: ethers.utils.parseEther("0.01").mul("3"),
+            value: ethers.utils.parseEther("0.03")//.mul("3"),
           }
         )
       ).to.not.be.reverted;

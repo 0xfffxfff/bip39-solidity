@@ -12,7 +12,8 @@ library Effect {
     function vhsFilter(
         uint256 vhsLevel,
         uint256 distortionLevel,
-        bool invert
+        bool invert,
+        bool animate
     ) internal pure returns (string memory) {
         string memory colorMatrix = invert
             ? "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0"
@@ -51,15 +52,34 @@ library Effect {
                     : /*l4+*/ "5",
                 '" result="textBlur_pass5" />',
                 '<feTurbulence baseFrequency=".015" type="fractalNoise" />',
-                '<feColorMatrix type="hueRotate" values="0"><animate attributeName="values" from="0" to="360" dur="20s" repeatCount="indefinite" /></feColorMatrix>',
-                '<feDisplacementMap in="textBlur_pass5" xChannelSelector="R" yChannelSelector="B" scale="20">',
-                '<animate attributeName="scale" values="',
-                distortionLevel == 1
-                    ? "10;20;15;25;15;20;10"
-                    : distortionLevel == 2
-                    ? "20;30;30;20"
-                    : "22:38:28:38:22",
-                '" dur="20s" repeatCount="indefinite" /></feDisplacementMap></filter></defs>'
+                '<feColorMatrix type="hueRotate" values="0">',
+                (
+                    animate
+                        ? '<animate attributeName="values" from="0" to="360" dur="16s" repeatCount="indefinite" />'
+                        : ""
+                ),
+                "</feColorMatrix>",
+                '<feDisplacementMap in="textBlur_pass5" xChannelSelector="R" yChannelSelector="B" scale="',
+                distortionLevel == 1 ? "10" : distortionLevel == 2
+                    ? "20"
+                    : "22",
+                '">',
+                (
+                    animate
+                        ? (
+                            string.concat(
+                                '<animate attributeName="scale" values="',
+                                distortionLevel == 1
+                                    ? "10;20;15;25;15;20;10"
+                                    : distortionLevel == 2
+                                    ? "20;30;30;20"
+                                    : "22:38:28:38:22",
+                                '" dur="16s" repeatCount="indefinite" />'
+                            )
+                        )
+                        : ""
+                ),
+                "</feDisplacementMap></filter></defs>"
             );
     }
 }
