@@ -20,7 +20,7 @@ task("mint", "Mint a Token")
 
     for (let i = 0; i < amount; i++) {
       const wordCount = choices[Math.floor(Math.random() * choices.length)];
-      const mnemonicIndices = await MnemonicPoemArtifact.generateMnemonic(
+      const mnemonicIndices = await MnemonicPoemArtifact["generateMnemonic(uint256)"](
         wordCount
       );
       const mnemonic = mnemonicIndices.map(
@@ -30,7 +30,7 @@ task("mint", "Mint a Token")
       console.log(`Minting: ${mnemonic.join(" ")}`);
 
       await MnemonicPoemArtifact.mint(mnemonicIndices, {
-        value: hre.ethers.utils.parseEther("0.01").mul(wordCount.toString()),
+        value: hre.ethers.utils.parseEther("0.03")/*.mul(wordCount.toString())*/,
       });
     }
     console.log(`All Done!`);

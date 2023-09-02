@@ -12,7 +12,7 @@ task("unlock", "Unlock minting")
       MnemonicPoem.address
     );
 
-    await MnemonicPoemArtifact.lock(false);
+    await MnemonicPoemArtifact.setPause(false);
 
     console.log(`All Done!`);
   });
