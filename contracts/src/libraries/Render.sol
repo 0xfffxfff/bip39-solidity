@@ -111,7 +111,7 @@ library Render {
                     "g",
                     string.concat(
                         SVG.filterAttribute("vhs"),
-                        " ",
+                        ' transform-origin="50% 50%" ',
                         'transform="rotate(',
                         Traits.textRotation(words, entropy),
                         ')"'
@@ -192,20 +192,13 @@ library Render {
             yDistance = 55;
         }
 
-        uint256 rotationSeed = Traits._rarity(entropy, "rotation");
-        bool isPositive = rotationSeed % 2 == 0;
-        uint256 degrees = (rotationSeed / 10) % 6;
         string memory svgTexts;
         for (uint256 i = 0; i <= lineCount; i++) {
             svgTexts = string.concat(
                 svgTexts,
                 TextLine.render(
                     tempLines[i],
-                    (
-                        isPositive
-                            ? 90 + degrees * (words.length > 12 ? 1 : 2)
-                            : 90 - degrees * (words.length > 12 ? 1 : 2)
-                    ),
+                    90,
                     (444 - (lineCount * yDistance) / 2) + (i * yDistance),
                     fontSize,
                     textColor
