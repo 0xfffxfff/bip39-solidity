@@ -70,10 +70,10 @@ library Effect {
                             string.concat(
                                 '<animate attributeName="scale" values="',
                                 distortionLevel == 1
-                                    ? "10;20;15;25;15;20;10"
+                                    ? "25;15;20;10;20;15;25"
                                     : distortionLevel == 2
-                                    ? "20;30;30;20"
-                                    : "22:38:28:38:22",
+                                    ? "30;20;20;30"
+                                    : "28:38:22:38:28",
                                 '" dur="16s" repeatCount="indefinite" />'
                             )
                         )
