@@ -96,6 +96,19 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
         _mintPoem(seedIndices, msg.sender, false);
     }
 
+    function mintReserve(
+        uint256[] memory seedIndices,
+        bytes32[] calldata proof,
+        uint256 max
+    )
+        external
+        payable
+        reserveMintChecks(proof, max, seedIndices.length)
+        nonReentrant
+    {
+        _mintPoem(seedIndices, msg.sender, false);
+    }
+
     function mintArtist(
         uint256[] memory seedIndices,
         address to,
