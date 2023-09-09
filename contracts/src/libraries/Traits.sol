@@ -19,23 +19,19 @@ library Traits {
         return (_rarity(entropy, "distortion") % 3) + 1; // 1-3
     }
 
-    function colorTrait(
-        string[] memory words,
-        bytes memory entropy,
-        bool bound,
-        Edition edition
-    ) internal pure returns (string memory) {
-        string[3] memory color = colorType(words, entropy, bound, edition);
-        return color[0];
-    }
-
     function colorType(
         string[] memory words,
         bytes memory entropy,
         bool bound,
         Edition edition
-    ) internal pure returns (string[3] memory) {
-        return ["Void", "#F9F9F9", "#000000"];
+    ) internal pure returns (string[2] memory) {
+        if (bound) {
+            return ["#A10000", "#FFFFFF"];
+        }
+        if (edition == Edition.Curated) {
+            return ["#000000", "#FFFFFF"];
+        }
+        return ["#F9F9F9", "#000000"];
     }
 
     function backgroundColor(
@@ -44,8 +40,8 @@ library Traits {
         bool bound,
         Edition edition
     ) internal pure returns (string memory) {
-        string[3] memory color = colorType(words, entropy, bound, edition);
-        return color[1];
+        string[2] memory color = colorType(words, entropy, bound, edition);
+        return color[0];
     }
 
     function textColor(
@@ -54,8 +50,8 @@ library Traits {
         bool bound,
         Edition edition
     ) internal pure returns (string memory) {
-        string[3] memory color = colorType(words, entropy, bound, edition);
-        return color[2];
+        string[2] memory color = colorType(words, entropy, bound, edition);
+        return color[1];
     }
 
     function textRotation(

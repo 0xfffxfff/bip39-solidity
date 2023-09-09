@@ -103,7 +103,6 @@ library Render {
                     '@font-face {font-family: "EBGI";src: url("',
                     base64font,
                     '");',
-                    // "text {text-transform: uppercase;"
                     "}</style>",
                     Effect.vhsFilter(
                         words.length <= 3 ? 4 : words.length <= 6
