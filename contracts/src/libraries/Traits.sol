@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0;
 
 import {Util} from "./Util.sol";
+import "../misc/Editions.sol";
 
 library Traits {
 
@@ -20,32 +21,40 @@ library Traits {
 
     function colorTrait(
         string[] memory words,
-        bytes memory entropy
+        bytes memory entropy,
+        bool bound,
+        Edition edition
     ) internal pure returns (string memory) {
-        string[3] memory color = colorType(words, entropy);
+        string[3] memory color = colorType(words, entropy, bound, edition);
         return color[0];
     }
 
     function colorType(
         string[] memory words,
-        bytes memory entropy
+        bytes memory entropy,
+        bool bound,
+        Edition edition
     ) internal pure returns (string[3] memory) {
         return ["Void", "#F9F9F9", "#000000"];
     }
 
     function backgroundColor(
         string[] memory words,
-        bytes memory entropy
+        bytes memory entropy,
+        bool bound,
+        Edition edition
     ) internal pure returns (string memory) {
-        string[3] memory color = colorType(words, entropy);
+        string[3] memory color = colorType(words, entropy, bound, edition);
         return color[1];
     }
 
     function textColor(
         string[] memory words,
-        bytes memory entropy
+        bytes memory entropy,
+        bool bound,
+        Edition edition
     ) internal pure returns (string memory) {
-        string[3] memory color = colorType(words, entropy);
+        string[3] memory color = colorType(words, entropy, bound, edition);
         return color[2];
     }
 
@@ -72,13 +81,22 @@ library Traits {
 
     function attributes(
         string[] memory words,
-        bytes memory entropy
+        bytes memory entropy,
+        bool bound,
+        Edition edition
     ) internal pure returns (string memory) {
         string memory result = "[";
         result = string.concat(
             result,
-            _attribute("Words", Util.uint256ToString(words.length))
+            _attribute("Words", Util.uint256ToString(words.length)),
+            _attribute("Edition", edition == Edition.Curated ? "Curated" : "Public")
         );
+        if (bound) {
+            result = string.concat(
+                result,
+                _attribute("Bound")
+            );
+        }
         return string.concat(result, "]");
     }
 
@@ -95,6 +113,17 @@ library Traits {
                 "{",
                 Util.keyValue("trait_type", _traitType),
                 ",",
+                Util.keyValue("value", _value),
+                "}"
+            );
+    }
+
+    function _attribute(
+        string memory _value
+    ) internal pure returns (string memory) {
+        return
+            string.concat(
+                "{",
                 Util.keyValue("value", _value),
                 "}"
             );

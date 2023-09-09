@@ -9,6 +9,7 @@ import {TextLine} from "./TextLine.sol";
 import {Traits} from "./Traits.sol";
 import {SVG} from "./SVG.sol";
 import {Effect} from "./Effect.sol";
+import "../misc/Editions.sol";
 
 library Render {
     string public constant description = "Seed Poems";
@@ -21,6 +22,8 @@ library Render {
         uint256 _tokenId,
         string[] memory words,
         bytes memory entropy,
+        bool bound,
+        Edition edition,
         string memory base64font
     ) external pure returns (string memory) {
         string memory wordString = words[0];
@@ -32,43 +35,51 @@ library Render {
                 _tokenId: _tokenId,
                 _name: wordString,
                 _description: wordString,
-                _attributes: Traits.attributes(words, entropy),
-                _backgroundColor: Traits.backgroundColor(words, entropy),
-                _svg: _svg(words, entropy, base64font, false),
-                _animation: _svg(words, entropy, base64font, true)
+                _attributes: Traits.attributes(words, entropy, bound, edition),
+                _backgroundColor: Traits.backgroundColor(words, entropy, bound, edition),
+                _svg: _svg(words, entropy, bound, edition, base64font, false),
+                _animation: _svg(words, entropy, bound, edition, base64font, true)
             });
     }
 
     function renderSVG(
         string[] memory words,
         bytes memory entropy,
+        bool bound,
+        Edition edition,
         string memory base64font
     ) external pure returns (string memory) {
-        return _svg(words, entropy, base64font, true);
+        return _svg(words, entropy, bound, edition, base64font, true);
     }
 
     function renderSVGBase64(
         string[] memory words,
         bytes memory entropy,
+        bool bound,
+        Edition edition,
         string memory base64font
     ) external pure returns (string memory) {
-        return Metadata._encodeSVG(_svg(words, entropy, base64font, true));
+        return Metadata._encodeSVG(_svg(words, entropy, bound, edition, base64font, true));
     }
 
     function renderSVGstatic(
         string[] memory words,
         bytes memory entropy,
+        bool bound,
+        Edition edition,
         string memory base64font
     ) external pure returns (string memory) {
-        return _svg(words, entropy, base64font, false);
+        return _svg(words, entropy, bound, edition, base64font, false);
     }
 
     function renderSVGBase64static(
         string[] memory words,
         bytes memory entropy,
+        bool bound,
+        Edition edition,
         string memory base64font
     ) external pure returns (string memory) {
-        return Metadata._encodeSVG(_svg(words, entropy, base64font, false));
+        return Metadata._encodeSVG(_svg(words, entropy, bound, edition, base64font, false));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -78,6 +89,8 @@ library Render {
     function _svg(
         string[] memory words,
         bytes memory entropy,
+        bool bound,
+        Edition edition,
         string memory base64font,
         bool animate
     ) internal pure returns (string memory) {
@@ -100,13 +113,13 @@ library Render {
                             : 1,
                         Traits.distortionType(entropy),
                         keccak256(
-                            abi.encodePacked(Traits.textColor(words, entropy))
+                            abi.encodePacked(Traits.textColor(words, entropy, bound, edition))
                         ) == keccak256(abi.encodePacked("#000000")),
                         animate
                     ),
                     "</defs>"
                 ),
-                Background.render(Traits.backgroundColor(words, entropy)),
+                Background.render(Traits.backgroundColor(words, entropy, bound, edition)),
                 SVG.element(
                     "g",
                     string.concat(
@@ -119,7 +132,7 @@ library Render {
                     _renderText(
                         words,
                         entropy,
-                        Traits.textColor(words, entropy)
+                        Traits.textColor(words, entropy, bound, edition)
                     )
                 )
             );

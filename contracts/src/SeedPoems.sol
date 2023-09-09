@@ -5,6 +5,7 @@ import "solady/src/utils/SSTORE2.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./BIP39.sol";
 import "./SeedPoemsAdmin.sol";
+import "./misc/Editions.sol";
 import {Render} from "./libraries/Render.sol";
 
 ////////////////////////////////////////////////////////////////////////
@@ -32,9 +33,11 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
         uint256[] indices;
         bytes entropy;
         bool bound;
+        Edition edition;
     }
 
     mapping(uint256 => Seed) public seeds;
+    mapping(uint256 => bool) public isWordMinted;
     mapping(bytes32 => bool) public isEntropyMinted;
 
     address private font;
@@ -44,26 +47,41 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
         seedIndices[0] = 1560; // seek
         seedIndices[1] = 1337; // poet
         seedIndices[2] = 1559; // seed
-        _mintPoem(seedIndices, msg.sender, false);
+        _mintPoem(seedIndices, msg.sender, Edition.Public, false);
     }
 
     /*//////////////////////////////////////////////////////////////
                                  MINT
     //////////////////////////////////////////////////////////////*/
 
-    function _mintPoem(
+    function _mintPoemPublic(
         uint256[] memory seedIndices,
         address to,
         bool bound
     ) internal {
-        uint id = ++totalSupply;
-
         // Keep track of words minted
         totalWords += seedIndices.length;
         require(
             totalWords <= MAX_WORD_SUPPLY,
             "MINTABLE_WORD_LIMIT_REACHED_2048"
         );
+
+        // Words in the limited edition can only be minted once
+        for (uint i = 0; i < seedIndices.length; i++) {
+            require(!isWordMinted[seedIndices[i]], "WORD_ALREADY_MINTED");
+            isWordMinted[seedIndices[i]] = true;
+        }
+
+        _mintPoem(seedIndices, to, Edition.Public, bound);
+    }
+
+    function _mintPoem(
+        uint256[] memory seedIndices,
+        address to,
+        Edition edition,
+        bool bound
+    ) internal {
+        uint id = ++totalSupply;
 
         // This generates the entropy from the seed indices
         // and simultaneously validates the seed.
@@ -78,6 +96,7 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
         seeds[id] = Seed({
             indices: seedIndices,
             entropy: entropy,
+            edition: edition,
             bound: bound
         });
 
@@ -87,13 +106,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
 
     function mint(
         uint256[] memory seedIndices
-    )
-        external
-        payable
-        nonReentrant
-        publicMintChecks(seedIndices.length)
-    {
-        _mintPoem(seedIndices, msg.sender, false);
+    ) external payable nonReentrant publicMintChecks(seedIndices.length) {
+        _mintPoem(seedIndices, msg.sender, Edition.Public, false);
     }
 
     function mintReserve(
@@ -106,7 +120,7 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
         reserveMintChecks(proof, max, seedIndices.length)
         nonReentrant
     {
-        _mintPoem(seedIndices, msg.sender, false);
+        _mintPoem(seedIndices, msg.sender, Edition.Public, false);
     }
 
     function mintArtist(
@@ -120,7 +134,15 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
         ownerMintChecks(seedIndices.length)
         nonReentrant
     {
-        _mintPoem(seedIndices, to, bound);
+        _mintPoem(seedIndices, to, Edition.Public, bound);
+    }
+
+    function mintCurated(
+        uint256[] memory seedIndices,
+        address to,
+        bool bound
+    ) external payable onlyCuratedMinter nonReentrant {
+        _mintPoem(seedIndices, to, Edition.Curated, bound);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -129,18 +151,16 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
 
     /**
      * This method allows a seed poem to be bound to a specific
-     * address that is derived from the seed itself.
+     * address. This is meant to be an option for the owner of
+     * the seed poem to bind it to a derived address of the seed.
+     * It is not enforcable onchain, but it is verifiable offchain.
      * @param id tokenId of the poem to be bound
      */
-    function bind(
-        uint256 id,
-        address to /*, message, signature, address */
-    ) public {
+    function bind(uint256 id, address to) public {
         require(ownerOf(id) == msg.sender, "ONLY_OWNER");
         transferFrom(msg.sender, to, id);
         seeds[id].bound = true;
-        // TODO: require valid signature signed offchain by the artist's "validator"
-        revert('IMPLEMENT_ME');
+        revert("IMPLEMENT_ME");
     }
 
     function transferFrom(
@@ -202,6 +222,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
                 _tokenId,
                 indicesToWords(seeds[_tokenId].indices),
                 seeds[_tokenId].entropy,
+                seeds[_tokenId].bound,
+                seeds[_tokenId].edition,
                 getFont()
             );
     }
@@ -211,6 +233,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
             Render.renderSVG(
                 indicesToWords(seeds[_tokenId].indices),
                 seeds[_tokenId].entropy,
+                seeds[_tokenId].bound,
+                seeds[_tokenId].edition,
                 getFont()
             );
     }
@@ -220,7 +244,13 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
     ) external view returns (string memory) {
         bytes memory entropy = mnemonicToEntropy(seedIndices);
         return
-            Render.renderSVG(indicesToWords(seedIndices), entropy, getFont());
+            Render.renderSVG(
+                indicesToWords(seedIndices),
+                entropy,
+                false,
+                Edition.Public,
+                getFont()
+            );
     }
 
     function renderSVGBase64(
@@ -230,6 +260,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
             Render.renderSVGBase64(
                 indicesToWords(seeds[_tokenId].indices),
                 seeds[_tokenId].entropy,
+                seeds[_tokenId].bound,
+                seeds[_tokenId].edition,
                 getFont()
             );
     }
@@ -242,6 +274,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
             Render.renderSVGBase64(
                 indicesToWords(seedIndices),
                 entropy,
+                false,
+                Edition.Public,
                 getFont()
             );
     }
@@ -253,6 +287,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
             Render.renderSVGstatic(
                 indicesToWords(seeds[_tokenId].indices),
                 seeds[_tokenId].entropy,
+                seeds[_tokenId].bound,
+                seeds[_tokenId].edition,
                 getFont()
             );
     }
@@ -265,6 +301,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
             Render.renderSVGstatic(
                 indicesToWords(seedIndices),
                 entropy,
+                false,
+                Edition.Public,
                 getFont()
             );
     }
@@ -276,6 +314,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
             Render.renderSVGBase64static(
                 indicesToWords(seeds[_tokenId].indices),
                 seeds[_tokenId].entropy,
+                seeds[_tokenId].bound,
+                seeds[_tokenId].edition,
                 getFont()
             );
     }
@@ -288,6 +328,8 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
             Render.renderSVGBase64static(
                 indicesToWords(seedIndices),
                 entropy,
+                false,
+                Edition.Public,
                 getFont()
             );
     }
@@ -296,12 +338,7 @@ contract SeedPoems is BIP39, SeedPoemsAdmin, ReentrancyGuard {
     // Font
     ///////////////////////////////////////////////////////////////////////////
 
-    function setFont(
-        string calldata fontString
-    )
-        external
-        onlyOwner
-    {
+    function setFont(string calldata fontString) external onlyOwner {
         font = SSTORE2.write(bytes(fontString));
     }
 

@@ -17,28 +17,34 @@ error InvalidProof();
 
 abstract contract SeedPoemsAdmin is ERC721, Ownable {
 
-    uint256 public constant MAX_WORD_SUPPLY = 2048;
-    uint256 public constant ARTIST_ALLOTMENT = 308; // 15%
-    uint256 public constant WORD_SUPPLY = MAX_WORD_SUPPLY - ARTIST_ALLOTMENT;
-    uint256 public constant RESERVE_ALLOTMENT = 716;
-    uint256 public constant PUBLIC_WORD_SUPPLY = WORD_SUPPLY - RESERVE_ALLOTMENT;
-    uint256 public constant PRICE = 0.03 ether;
-
     uint256 public totalSupply;
 
+    // Public Edition
+    uint256 public constant MAX_WORD_SUPPLY = 2048;
+    uint256 public constant ARTIST_ALLOTMENT = 245; // ~12%
+    uint256 public constant WORD_SUPPLY = MAX_WORD_SUPPLY - ARTIST_ALLOTMENT;
+    uint256 public constant RESERVE_ALLOTMENT = 717; // ~35%
+    uint256 public constant PUBLIC_WORD_SUPPLY = WORD_SUPPLY - RESERVE_ALLOTMENT;
+    uint256 public constant PRICE = 0.03 ether;
     uint256 public totalWords;
     uint256 public publicClaimed;
     uint256 public reserveClaimed;
     mapping (address => uint) reserve;
     mapping (address => uint) reserveMinted;
-
     bytes32 public reserveRoot;
-
     bool public mintReserveActive = true;
     bool public mintingPaused = true;
 
+    // Curated Edition
+    address public curatedMinter;
+    modifier onlyCuratedMinter {
+        require(msg.sender == curatedMinter, "NOT_CURATED_MINTER");
+        _;
+    }
+
     constructor () ERC721("Seed Poems", "SEED") {
         _initializeOwner(msg.sender);
+        curatedMinter = msg.sender;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -97,6 +103,11 @@ abstract contract SeedPoemsAdmin is ERC721, Ownable {
     function withdraw(address payable _to) public onlyOwner {
         (bool success,) = _to.call{value: address(this).balance}("");
         require(success);
+    }
+
+    /// @notice Transfer curated minter role
+    function transferCuratedMinter(address newCuratedMinter) public onlyCuratedMinter {
+        curatedMinter = newCuratedMinter;
     }
 
 }
